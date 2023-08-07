@@ -44,7 +44,7 @@ async def addrole(ctx, member: discord.Member):
 @commands.has_role('Server Op')
 async def status(ctx):
     await ctx.send("Returning server status!")
-    status = str(shell.sudo("systemctl status squad.service | grep Active"))
+    status = str(shell.sudo("systemctl status minecraft.service | grep Active"))
     for line in status.split('\n'):
         if 'Active' in line:
             await ctx.send("```python\n"+line+"```")
@@ -54,7 +54,7 @@ async def status(ctx):
 @commands.has_role('Server Op')
 async def start(ctx):
     await ctx.send("Starting the server!")
-    status = str(shell.sudo("systemctl start squad.service"))
+    status = str(shell.sudo("systemctl start minecraft.service"))
     for line in status.split('\n'):
         if 'with status 0' in line:
             await ctx.send("```python\n"+"Server has started successfully!"+"```")
@@ -64,7 +64,7 @@ async def start(ctx):
 @commands.has_role('Server Op')
 async def restart(ctx):
     await ctx.send("Restarting the server!")
-    status = str(shell.sudo("systemctl restart squad.service"))
+    status = str(shell.sudo("systemctl restart minecraft.service"))
     for line in status.split('\n'):
         if 'with status 0' in line:
             await ctx.send("```python\n"+"Server has restarted successfully!"+"```")
@@ -74,20 +74,10 @@ async def restart(ctx):
 @commands.has_role('Server Op')
 async def stop(ctx):
     await ctx.send("Stopping the server!")
-    status = str(shell.sudo("systemctl stop squad.service"))
+    status = str(shell.sudo("systemctl stop minecraft.service"))
     for line in status.split('\n'):
         if 'with status 0' in line:
             await ctx.send("```python\n"+"Server has stopped successfully!"+"```")
-
-
-@client.command()
-@commands.has_role('Server Op')
-async def update(ctx):
-    await ctx.send("Updating the server!\nThis may take a few minutes!")
-    status = str(shell.run("./update.sh"))
-    for line in status.split('\n'):
-        if 'App ' in line:
-            await ctx.send("```python\n"+line+"```")
 
 
 @status.error
@@ -116,14 +106,6 @@ async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.MissingRole):
         role = get(ctx.guild.roles, name="Server Op")
         await ctx.send('Only the '+role.name+' role may use this command!')
-
-
-@update.error
-async def on_command_error(ctx, error):
-    if isinstance(error, discord.ext.commands.MissingRole):
-        role = get(ctx.guild.roles, name="Server Op")
-        await ctx.send('Only the '+role.name+' role may use this command!')
-
 
 @addrole.error
 async def on_command_error(ctx, error):
