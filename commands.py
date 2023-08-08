@@ -52,3 +52,15 @@ async def stop(ctx, shell):
     for line in status.split('\n'):
         if 'with status 0' in line:
             await ctx.send("```python\n"+"Server has stopped successfully!"+"```")
+
+@client.command()
+@commands.has_role('Server Op')
+async def help(ctx):
+    await ctx.send("List of currently implemented commands\n"+
+                   "\n`!help` - Displays this message\n"+
+                   "`!add @user` - Gives the mentions user the Server Op role to use these commands\n"+
+                   "`!status` - give the current status of the server and uptime\n"+
+                   "`!start` - Starts the server if not running (does nothing if already running)\n"+
+                   "`!stop` - Stops the server if running (does nothing if already stopped)\n"+
+                   "`!restart` - Restarts the server, if running, starts the server if stopped\n"+
+                   "\nContact @snipplerifsky for support or feature request!")
