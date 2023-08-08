@@ -95,12 +95,13 @@ async def stop(ctx):
 @commands.has_role('Server Op')
 async def wochelp(ctx):
     await ctx.send("List of currently implemented commands\n"+
-                   "\n`!help` - Displays this message\n"+
-                   "`!add @user` - Gives the mentions user the Server Op role to use these commands\n"+
-                   "`!status` - give the current status of the server and uptime\n"+
+                   "\n`!wochelp` - Displays this message\n"+
+                   "`!add @user` - Gives the mentioned user the Server Op role to use these commands\n"+
+                   "`!status` - Gives the current status of the server and uptime\n"+
                    "`!start` - Starts the server if not running (does nothing if already running)\n"+
                    "`!stop` - Stops the server if running (does nothing if already stopped)\n"+
                    "`!restart` - Restarts the server, if running, starts the server if stopped\n"+
+                   "`!tps` - Gives the current TPS (Ticks Per Second) of the server. (20 is max)\n"+
                    "\nContact @snipplerifsky for support or feature request!")
 
 
