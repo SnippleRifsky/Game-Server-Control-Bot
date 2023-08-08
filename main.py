@@ -41,14 +41,15 @@ async def on_ready():
 @client.command()
 @commands.has_role("Server Op")
 async def tps(ctx):
-    shell = client.extra_events["shell"]
+    shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching server TPS...")
 
     # Read the logfile and extract the latest TPS line
     tps_command = "grep 'TPS' logs/latest.log | tail -n 1"
-    line = str(shell.run(tps_command, hide=True))
+    line = shell.run(tps_command, hide=True)  # Hide command output
 
-    await ctx.send("```python\n" + line + "```")
+    tps_line = line.stdout.strip()  # Get the stdout from the response
+    await ctx.send("```python\n" + tps_line + "```")
 
 
 @client.command()
