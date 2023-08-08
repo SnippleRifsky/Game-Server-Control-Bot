@@ -8,7 +8,8 @@ client = init_client()
 
 @client.command()
 @commands.has_role("Server Op")
-async def tps(ctx, shell):
+async def tps(ctx):
+    shell = client.extra_events["shell"]
     await ctx.send("Fetching server TPS...")
 
     # Read the logfile and extract the latest TPS line
