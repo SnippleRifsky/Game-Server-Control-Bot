@@ -62,6 +62,7 @@ async def addrole(ctx, member: discord.Member):
 @client.command()
 @commands.has_role("Server Op")
 async def status(ctx):
+    shell = client.extra_events["shell"]
     await ctx.send("Returning server status!")
     status = str(shell.sudo("systemctl status minecraft.service | grep Active"))
     for line in status.split("\n"):
@@ -72,6 +73,7 @@ async def status(ctx):
 @client.command()
 @commands.has_role("Server Op")
 async def start(ctx):
+    shell = client.extra_events["shell"]
     await ctx.send("Starting the server!")
     status = str(shell.sudo("systemctl start minecraft.service"))
     for line in status.split("\n"):
@@ -82,6 +84,7 @@ async def start(ctx):
 @client.command()
 @commands.has_role("Server Op")
 async def restart(ctx):
+    shell = client.extra_events["shell"]
     await ctx.send("Restarting the server!")
     status = str(shell.sudo("systemctl restart minecraft.service"))
     for line in status.split("\n"):
@@ -92,6 +95,7 @@ async def restart(ctx):
 @client.command()
 @commands.has_role("Server Op")
 async def stop(ctx):
+    shell = client.extra_events["shell"]
     await ctx.send("Stopping the server!")
     status = str(shell.sudo("systemctl stop minecraft.service"))
     for line in status.split("\n"):
