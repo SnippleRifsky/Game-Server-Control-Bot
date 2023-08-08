@@ -1,4 +1,5 @@
 import discord
+import asyncio
 from apikeys import *
 from ssh import init_ssh
 from discord.ext import commands
@@ -40,18 +41,23 @@ async def on_ready():
 
 @client.command()
 @commands.has_role("Server Op")
-async def playerlist(ctx):
+async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
+    # Execute the /list command and wait for a moment to let the output be logged
+    list_command = "./minecraft_command.sh 'list'"
+    shell.run(list_command)
+    await asyncio.sleep(1)
+
     # Get the timestamp from the first line
-    timestamp_command = "grep 'CONSOLE issued server command: /list' logs/latest.log | head -n 1 | awk '{print $1, $2}'"
+    timestamp_command = "grep 'CONSOLE issued server command: /list' logs/latest.log | tail -n 1 | awk '{print $1, $2}'"
     timestamp_line = str(shell.run(timestamp_command))
     timestamp = timestamp_line.strip()
 
-    # Read the logfile and extract lines with the same timestamp
-    list_command = f"grep '{timestamp}' logs/latest.log | grep -v 'CONSOLE issued server command: /list'"
-    lines = shell.run(list_command).stdout.split("\n")
+    # Read the logfile and extract lines with the same timestamp, excluding the first line
+    list_output_command = f"grep '{timestamp}' logs/latest.log | grep -v 'CONSOLE issued server command: /list' | tail -n +2"
+    lines = shell.run(list_output_command).stdout.split("\n")
 
     player_list = "\n".join(lines)
 
