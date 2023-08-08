@@ -1,5 +1,4 @@
 import discord
-import asyncio
 from apikeys import *
 from ssh import init_ssh
 from discord.ext import commands
@@ -45,23 +44,30 @@ async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
-    # Execute the /list command and wait for a moment to let the output be logged
+    # Execute the minecraft_command.sh "list" and get the output
     list_command = "./minecraft_command.sh 'list'"
-    shell.run(list_command)
-    await asyncio.sleep(1)
+    command_output = str(shell.run(list_command, hide=True))
 
-    # Get the timestamp from the first line
-    timestamp_command = "grep 'CONSOLE issued server command: /list' logs/latest.log | tail -n 1 | awk '{print $1, $2}'"
-    timestamp_line = str(shell.run(timestamp_command))
-    timestamp = timestamp_line.strip()
+    # Extract the timestamp from the command output
+    timestamp_line = None
+    for line in command_output.split("\n"):
+        if "[Essentials] CONSOLE issued server command: /list" in line:
+            timestamp_line = line
+            break
 
-    # Read the logfile and extract lines with the same timestamp, excluding the first line
-    list_output_command = f"grep '{timestamp}' logs/latest.log | grep -v 'CONSOLE issued server command: /list' | tail -n +2"
-    lines = shell.run(list_output_command).stdout.split("\n")
+    # If timestamp found, read the logs and filter for lines with the same timestamp
+    lines_with_timestamp = []
+    if timestamp_line:
+        with shell.cd("logs"):
+            logs_command = f"grep -h '{timestamp_line}' latest.log*"
+            logs_output = shell.run(logs_command, hide=True)
+            for line in logs_output.stdout.strip().split("\n"):
+                if timestamp_line not in line:
+                    lines_with_timestamp.append(line)
 
-    player_list = "\n".join(lines)
+    # Send the filtered lines to Discord
+    await ctx.send("```\n" + "\n".join(lines_with_timestamp) + "\n```")
 
-    await ctx.send("```\n" + player_list + "```")
 
 
 @client.command()
