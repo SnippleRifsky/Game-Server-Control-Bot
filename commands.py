@@ -53,6 +53,8 @@ async def stop(ctx, shell):
         if 'with status 0' in line:
             await ctx.send("```python\n"+"Server has stopped successfully!"+"```")
 
+client.remove_command("help")
+
 @client.command()
 @commands.has_role('Server Op')
 async def help(ctx):
