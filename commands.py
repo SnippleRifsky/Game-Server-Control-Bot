@@ -13,9 +13,9 @@ async def tps(ctx, shell):
 
     # Read the logfile and extract the latest TPS line
     tps_command = "grep 'TPS' logs/latest.log | tail -n 1"
-    status = str(shell.run(tps_command))
+    line = str(shell.run(tps_command))
 
-    await ctx.send("```python\n" + status + "```")
+    await ctx.send("```python\n" + line + "```")
 
 
 @client.command()
