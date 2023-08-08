@@ -11,17 +11,21 @@ client = commands.Bot(command_prefix="!", intents=intents)
 
 BOTTOKEN = get_api_keys()
 
-shell = init_ssh()
-
 
 @client.event
 async def on_ready():
     print("Starting the bot")
     print("------------------------------")
+
     # Automatically retrieve the guild ID
     guild = client.guilds[0] if client.guilds else None
     if guild:
         print(f"Connected to guild: {guild.name} (ID: {guild.id})")
+
+        # Initialize the SSH shell
+        shell = init_ssh()
+        client.extra_events["shell"] = shell  # Attach to client.extra_events
+
         if get(guild.roles, name="Server Op"):
             print("Server Op role already exists")
         else:
@@ -29,6 +33,7 @@ async def on_ready():
             print("Creating Server Op role")
     else:
         print("Bot is not a member of any guilds.")
+
     print("Bot Initialized")
     print("------------------------------")
 
