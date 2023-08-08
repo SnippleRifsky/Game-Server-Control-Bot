@@ -79,11 +79,10 @@ async def stop(ctx):
         if 'with status 0' in line:
             await ctx.send("```python\n"+"Server has stopped successfully!"+"```")
 
-client.remove_command("help")
 
 @client.command()
 @commands.has_role('Server Op')
-async def help(ctx):
+async def wochelp(ctx):
     await ctx.send("List of currently implemented commands\n"+
                    "\n`!help` - Displays this message\n"+
                    "`!add @user` - Gives the mentions user the Server Op role to use these commands\n"+
