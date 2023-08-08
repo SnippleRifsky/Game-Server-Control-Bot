@@ -40,6 +40,26 @@ async def on_ready():
 
 @client.command()
 @commands.has_role("Server Op")
+async def playerlist(ctx):
+    shell = ctx.bot.extra_events["shell"]
+    await ctx.send("Fetching player list...")
+
+    # Get the timestamp from the first line
+    timestamp_command = "grep 'CONSOLE issued server command: /list' logs/latest.log | head -n 1 | awk '{print $1, $2}'"
+    timestamp_line = str(shell.run(timestamp_command))
+    timestamp = timestamp_line.strip()
+
+    # Read the logfile and extract lines with the same timestamp
+    list_command = f"grep '{timestamp}' logs/latest.log | grep -v 'CONSOLE issued server command: /list'"
+    lines = shell.run(list_command).stdout.split("\n")
+
+    player_list = "\n".join(lines)
+
+    await ctx.send("```\n" + player_list + "```")
+
+
+@client.command()
+@commands.has_role("Server Op")
 async def tps(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching server TPS...")
