@@ -33,6 +33,17 @@ async def on_ready():
     print("------------------------------")
 
 @client.command()
+@commands.has_role('Server Op')
+async def tps(ctx, shell):
+    await ctx.send("Fetching server TPS...")
+    
+    # Read the logfile and extract the latest TPS line
+    tps_command = "grep 'TPS' logs/latest.log | tail -n 1"
+    status = str(shell.run(tps_command))
+    
+    await ctx.send("```python\n" + status + "```")
+
+@client.command()
 @commands.has_permissions(manage_roles=True)
 async def addrole(ctx, member: discord.Member):
     role = get(ctx.guild.roles, name="Server Op")
