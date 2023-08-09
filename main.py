@@ -72,7 +72,7 @@ async def lpedit(ctx):
     formatted_message += f"{editor_link}\n```"
 
     # Sanitize and format the output
-    sanitized_lines = [line.replace("[12:41:52] [luckperms-command-executor/INFO]:", "") for line in hardcoded_lines.split("\n")]
+    sanitized_lines = [line.replace("[12:41:52] [luckperms-command-executor/INFO]:", "") for line in editor_link.split("\n")]
     formatted_message = "```python\n"
     formatted_message += last_lpedit_line + "\n"
     formatted_message += "\n".join(sanitized_lines) + "\n"
