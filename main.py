@@ -85,6 +85,14 @@ async def tps(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching server TPS...")
 
+    # Execute ./minecraft_command.sh tps via SSH
+    list_command = "./minecraft_command.sh tps"
+    try:
+        shell.run(list_command, hide=True)
+    except Exception as e:
+        print(f"An error occurred while running the command: {e}")
+        pass
+
     # Read the logfile and extract the latest TPS line
     tps_command = "grep TPS logs/latest.log | tail -n 1"
     line = shell.run(tps_command, hide=True)  # Hide command output
