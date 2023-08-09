@@ -39,6 +39,34 @@ async def on_ready():
     print("Bot Initialized")
     print("------------------------------")
 
+@client.command()
+@commands.has_role("Server Op")
+async def lpedit(ctx):
+    shell = ctx.bot.extra_events["shell"]
+
+    # Execute ./minecraft_command.sh 'lp editor' via SSH
+    lpedit_command = "./minecraft_command.sh 'lp editor'"
+    try:
+        shell.run(lpedit_command, hide=True)
+    except Exception as e:
+        print(f"An error occurred while running the command: {e}")
+        pass
+
+    # Find the last occurrence of new lp editor session in the logs
+    last_lpedit_command = "grep 'Preparing a new editor session' logs/latest.log* | tail -n 1"
+    last_lpedit_output = shell.run(last_lpedit_command, hide=True)
+
+    last_lpedit_line = last_lpedit_output.stdout.strip()
+
+    # Send the last_lpedit_line and the next 2 lines after it to Discord
+    formatted_message = f"```\n{last_lpedit_line}\n"
+
+    # Hardcode the next 2 lines
+    hardcoded_lines = shell.run("tail -n 2 logs/latest.log*", hide=True).stdout.strip()
+    formatted_message += f"{hardcoded_lines}\n```"
+
+    await ctx.send(formatted_message)
+
 
 @client.command()
 @commands.has_role("Server Op")
@@ -86,16 +114,16 @@ async def tps(ctx):
     await ctx.send("Fetching server TPS...")
 
     # Execute ./minecraft_command.sh tps via SSH
-    list_command = "./minecraft_command.sh tps"
+    tps_command = "./minecraft_command.sh tps"
     try:
-        shell.run(list_command, hide=True)
+        shell.run(tps_command, hide=True)
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
         pass
 
     # Read the logfile and extract the latest TPS line
-    tps_command = "grep TPS logs/latest.log | tail -n 1"
-    line = shell.run(tps_command, hide=True)  # Hide command output
+    tps_grep = "grep TPS logs/latest.log | tail -n 1"
+    line = shell.run(tps_grep, hide=True)  # Hide command output
 
     tps_line = line.stdout.strip()  # Get the stdout from the response
     await ctx.send("```python\n" + tps_line + "```")
