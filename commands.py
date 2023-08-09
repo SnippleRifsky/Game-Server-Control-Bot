@@ -61,6 +61,7 @@ async def lpedit(ctx):
         print(f"An error occurred while running the command: {e}")
         pass
 
+    # Introduce a 2-second delay
     time.sleep(1)
 
     # Find the last occurrence of new lp editor session in the logs
@@ -71,15 +72,13 @@ async def lpedit(ctx):
 
     last_lpedit_line = last_lpedit_output.stdout.strip()
 
-    # Send the last_lpedit_line and the next 2 lines after it to Discord
-    formatted_message = f"```\n{last_lpedit_line}\n"
-
-    # Add line containing editor link
+    # Get the next line after the last_lpedit_line
     editor_link = shell.run("tail -n 1 logs/latest.log*", hide=True).stdout.strip()
-    formatted_message += f"{editor_link}\n```"
 
     # Sanitize and format the output
-    sanitized_lines = [line.replace("[12:41:52] [luckperms-command-executor/INFO]:", "") for line in editor_link.split("\n")]
+    sanitized_lines = [
+        line.split(":", 1)[1].strip() for line in editor_link.split("\n")
+    ]
     formatted_message = "```python\n"
     formatted_message += last_lpedit_line + "\n"
     formatted_message += "\n".join(sanitized_lines) + "\n"
