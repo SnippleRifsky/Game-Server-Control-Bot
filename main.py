@@ -46,41 +46,26 @@ async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
-    # Execute the minecraft_command.sh "list"
-    list_command = "./minecraft_command.sh list"
+    # Find the last occurrence of "players online" in the logs
+    last_players_online_command = "grep 'players online' logs/latest.log* | tail -n 1"
+    last_players_online_output = shell.run(last_players_online_command, hide=True)
 
-    try:
-        shell.run(list_command, hide=True)
-    except Exception as e:
-        # Handle the exception here (print a message, log, etc.)
-        print(f"An error occurred while running the command: {e}")
-        pass
+    last_players_online_line = last_players_online_output.stdout.strip()
 
-    # Get the latest line with "players online" from the logs
-    latest_line_command = "grep 'players online' logs/latest.log* | tail -n 1"
-    latest_line_output = shell.run(latest_line_command, hide=True)
-
-    latest_line = latest_line_output.stdout.strip()
-
-    # Extract timestamp from the latest line
-    timestamp = latest_line.split("[")[1].split("]")[0]
+    # Extract timestamp from the last "players online" line
+    last_timestamp = last_players_online_line.split("[")[1].split("]")[0]
 
     # Search for lines with the same timestamp in the logs
-    lines_with_timestamp_command = (
-        f"grep -h '[{timestamp}]' logs/latest.log* | grep -v '{latest_line}'"
-    )
+    lines_with_timestamp_command = f"grep -h '[{last_timestamp}]' logs/latest.log*"
     lines_with_timestamp_output = shell.run(lines_with_timestamp_command, hide=True)
 
     lines_with_timestamp = lines_with_timestamp_output.stdout.strip().split("\n")
 
-    # Truncate each line to a certain length before sending
+    # Send the filtered lines to Discord
     max_line_length = 200  # Max characters per line
     for line in lines_with_timestamp:
         truncated_line = line[:max_line_length]
         await ctx.send("```\n" + truncated_line + "\n```")
-
-
-
 
 
 @client.command()
