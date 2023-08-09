@@ -12,26 +12,29 @@ async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
-    # Execute the minecraft_command.sh "list" and get the output
+    # Execute the minecraft_command.sh "list"
     list_command = "./minecraft_command.sh 'list'"
-    command_output = str(shell.run(list_command, hide=True))
+    shell.run(list_command)
 
-    # Extract the timestamp from the command output
+    # Extract the timestamp from the log
     timestamp_line = None
-    for line in command_output.split("\n"):
-        if "[Essentials] CONSOLE issued server command: /list" in line:
-            timestamp_line = line
-            break
+    with shell.cd("logs"):
+        log_line_command = (
+            "grep '[Essentials] CONSOLE issued server command: /list' latest.log"
+        )
+        timestamp_line = shell.run(log_line_command, hide=True).stdout.strip()
 
     # If timestamp found, read the logs and filter for lines with the same timestamp
     lines_with_timestamp = []
     if timestamp_line:
+        timestamp = timestamp_line.split("[")[1].split("]")[0]
         with shell.cd("logs"):
-            logs_command = f"grep -h '{timestamp_line}' latest.log*"
+            logs_command = (
+                f"grep -h '{timestamp}' latest.log* | grep -v '{timestamp_line}'"
+            )
             logs_output = shell.run(logs_command, hide=True)
             for line in logs_output.stdout.strip().split("\n"):
-                if timestamp_line not in line:
-                    lines_with_timestamp.append(line)
+                lines_with_timestamp.append(line)
 
     # Send the filtered lines to Discord
     await ctx.send("```\n" + "\n".join(lines_with_timestamp) + "\n```")
