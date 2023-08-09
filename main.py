@@ -73,11 +73,12 @@ async def list(ctx):
 
     lines_with_timestamp = lines_with_timestamp_output.stdout.strip().split("\n")
 
-    # Split content into smaller chunks and send them individually
-    chunk_size = 20  # Max number of lines per chunk
-    for i in range(0, len(lines_with_timestamp), chunk_size):
-        chunk = "\n".join(lines_with_timestamp[i : i + chunk_size])
-        await ctx.send("```\n" + chunk + "\n```")
+    # Truncate each line to a certain length before sending
+    max_line_length = 200  # Max characters per line
+    for line in lines_with_timestamp:
+        truncated_line = line[:max_line_length]
+        await ctx.send("```\n" + truncated_line + "\n```")
+
 
 
 
