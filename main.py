@@ -1,5 +1,6 @@
 import discord
 import time
+import re
 from fabric import exceptions as fabric_exceptions
 from invoke import exceptions as invoke_exceptions
 from apikeys import *
@@ -68,13 +69,14 @@ async def lpedit(ctx):
     # Get the next line after the last_lpedit_line
     editor_link = shell.run("tail -n 1 logs/latest.log*", hide=True).stdout.strip()
 
-    # Sanitize and format the output
-    sanitized_lines = [
-        line.split(":", 1)[1].strip() for line in editor_link.split("\n")
-    ]
+    # Remove the timestamp and header pattern using regular expressions
+    sanitized_lines = re.sub(
+        r"\[\d{2}:\d{2}:\d{2}\] \[luckperms-command-executor/INFO\]: ", "", editor_link
+    )
+
     formatted_message = "```python\n"
     formatted_message += last_lpedit_line + "\n"
-    formatted_message += "\n".join(sanitized_lines) + "\n"
+    formatted_message += sanitized_lines + "\n"
     formatted_message += "```"
 
     await ctx.send(formatted_message)
