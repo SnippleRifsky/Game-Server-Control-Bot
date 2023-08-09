@@ -15,7 +15,9 @@ async def list(ctx):
     await ctx.send("Fetching player list...")
 
     # Find the last occurrence of "players online" in the logs
-    last_players_online_command = "grep 'players online' logs/latest.log* | tail -n 1"
+    last_players_online_command = (
+        "grep 'players online' logs/latest.log* | sort -r | head -n 1"
+    )
     last_players_online_output = shell.run(last_players_online_command, hide=True)
 
     last_players_online_line = last_players_online_output.stdout.strip()
@@ -24,7 +26,9 @@ async def list(ctx):
     last_timestamp = last_players_online_line.split("[")[1].split("]")[0]
 
     # Search for lines with the same timestamp in the logs
-    lines_with_timestamp_command = f"grep -h '[{last_timestamp}]' logs/latest.log*"
+    lines_with_timestamp_command = (
+        f"grep -h '[{last_timestamp}]' logs/latest.log*"
+    )
     lines_with_timestamp_output = shell.run(lines_with_timestamp_command, hide=True)
 
     lines_with_timestamp = lines_with_timestamp_output.stdout.strip().split("\n")
@@ -34,6 +38,7 @@ async def list(ctx):
     for line in lines_with_timestamp:
         truncated_line = line[:max_line_length]
         await ctx.send("```\n" + truncated_line + "\n```")
+
 
 
 @client.command()
