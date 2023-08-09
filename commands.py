@@ -37,7 +37,9 @@ async def list(ctx):
     sanitized_lines = "\n".join(line.split("[Server thread/INFO]: ")[1] for line in lines_with_timestamp)
 
     # Send the sanitized and combined lines as a single message to Discord
-    await ctx.send("```\n" + sanitized_lines + "\n```")
+    code_block = "```python\n" + sanitized_lines + "\n```"
+    await ctx.send(code_block)
+
 
 
 
