@@ -73,17 +73,16 @@ async def lpedit(ctx):
 
     last_lpedit_line = last_lpedit_output.stdout.strip()
 
-    # Get the next line after the last_lpedit_line
-    editor_link = shell.run("tail -n 1 logs/latest.log*", hide=True).stdout.strip()
+    # Define a regular expression pattern for timestamp and header
+    pattern = re.compile(r"\[\d{2}:\d{2}:\d{2}\] \[luckperms-command-executor/INFO\]: ")
 
     # Remove the timestamp and header pattern using regular expressions
-    sanitized_lines = re.sub(
-        r"\[\d{2}:\d{2}:\d{2}\] \[luckperms-command-executor/INFO\]: ", "", editor_link
-    )
+    sanitized_last_lpedit_line = pattern.sub("", last_lpedit_line)
+    sanitized_editor_link = pattern.sub("", editor_link)
 
     formatted_message = "```python\n"
-    formatted_message += last_lpedit_line + "\n"
-    formatted_message += sanitized_lines + "\n"
+    formatted_message += sanitized_last_lpedit_line + "\n"
+    formatted_message += sanitized_editor_link + "\n"
     formatted_message += "```"
 
     await ctx.send(formatted_message)
