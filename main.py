@@ -1,4 +1,6 @@
 import discord
+from fabric import exceptions as fabric_exceptions
+from invoke import exceptions as invoke_exceptions
 from apikeys import *
 from ssh import init_ssh
 from discord.ext import commands
@@ -44,32 +46,37 @@ async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
-    # Execute the minecraft_command.sh "list"
-    list_command = "./minecraft_command.sh 'list'"
-    shell.run(list_command)
+    # Execute ./minecraft_command.sh list via SSH
+    list_command = "./minecraft_command.sh list"
+    try:
+        shell.run(list_command, hide=True)
+    except Exception as e:
+        print(f"An error occurred while running the command: {e}")
+        pass
 
-    # Extract the timestamp from the log
-    timestamp_line = None
-    with shell.cd("logs"):
-        log_line_command = (
-            "grep '[Essentials] CONSOLE issued server command: /list' latest.log"
-        )
-        timestamp_line = shell.run(log_line_command, hide=True).stdout.strip()
+    # Find the last occurrence of "players online" in the logs
+    last_players_online_command = "grep 'players online' logs/latest.log* | tail -n 1"
+    last_players_online_output = shell.run(last_players_online_command, hide=True)
 
-    # If timestamp found, read the logs and filter for lines with the same timestamp
-    lines_with_timestamp = []
-    if timestamp_line:
-        timestamp = timestamp_line.split("[")[1].split("]")[0]
-        with shell.cd("logs"):
-            logs_command = (
-                f"grep -h '{timestamp}' latest.log* | grep -v '{timestamp_line}'"
-            )
-            logs_output = shell.run(logs_command, hide=True)
-            for line in logs_output.stdout.strip().split("\n"):
-                lines_with_timestamp.append(line)
+    last_players_online_line = last_players_online_output.stdout.strip()
 
-    # Send the filtered lines to Discord
-    await ctx.send("```\n" + "\n".join(lines_with_timestamp) + "\n```")
+    # Extract timestamp from the last "players online" line
+    last_timestamp = last_players_online_line.split("[")[1].split("]")[0]
+
+    # Search for lines with the same timestamp in the logs
+    lines_with_timestamp_command = f"grep '\\[{last_timestamp}\\]' logs/latest.log* | grep -v 'CONSOLE issued server command: /list'"
+    lines_with_timestamp_output = shell.run(lines_with_timestamp_command, hide=True)
+
+    lines_with_timestamp = lines_with_timestamp_output.stdout.strip().split("\n")
+
+    # Sanitize and combine the lines into a single string
+    sanitized_lines = "\n".join(
+        line.split("[Server thread/INFO]: ")[1] for line in lines_with_timestamp
+    )
+
+    # Send the sanitized and combined lines as a single message to Discord
+    code_block = "```python\n" + sanitized_lines + "\n```"
+    await ctx.send(code_block)
 
 
 @client.command()
@@ -78,8 +85,16 @@ async def tps(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching server TPS...")
 
+    # Execute ./minecraft_command.sh tps via SSH
+    list_command = "./minecraft_command.sh tps"
+    try:
+        shell.run(list_command, hide=True)
+    except Exception as e:
+        print(f"An error occurred while running the command: {e}")
+        pass
+
     # Read the logfile and extract the latest TPS line
-    tps_command = "grep 'TPS' logs/latest.log | tail -n 1"
+    tps_command = "grep TPS logs/latest.log | tail -n 1"
     line = shell.run(tps_command, hide=True)  # Hide command output
 
     tps_line = line.stdout.strip()  # Get the stdout from the response
