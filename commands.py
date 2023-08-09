@@ -18,7 +18,7 @@ async def list(ctx):
     list_command = "./minecraft_command.sh list"
 
     try:
-        shell.run(list_command, hide=True)
+        shell.run(list_command, hide=True, warn=True, capture=True)
     except Exception as e:
         # Handle the exception here (print a message, log, etc.)
         print(f"An error occurred while running the command: {e}")
