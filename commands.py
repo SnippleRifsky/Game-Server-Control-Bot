@@ -18,34 +18,32 @@ async def list(ctx):
     list_command = "./minecraft_command.sh list"
 
     try:
-        shell.run(list_command, hide=True, warn=True, capture=True)
+        shell.run(list_command, hide=True)
     except Exception as e:
         # Handle the exception here (print a message, log, etc.)
         print(f"An error occurred while running the command: {e}")
         pass
 
-    # Extract the timestamp from the log
-    timestamp_line = None
-    with shell.cd("logs"):
-        log_line_command = (
-            "grep '[Essentials] CONSOLE issued server command: /list' latest.log"
-        )
-        timestamp_line = shell.run(log_line_command, hide=True).stdout.strip()
+    # Get the latest line with "players online" from the logs
+    latest_line_command = "grep 'players online' logs/latest.log* | tail -n 1"
+    latest_line_output = shell.run(latest_line_command, hide=True)
 
-    # If timestamp found, read the logs and filter for lines with the same timestamp
-    lines_with_timestamp = []
-    if timestamp_line:
-        timestamp = timestamp_line.split("[")[1].split("]")[0]
-        with shell.cd("logs"):
-            logs_command = (
-                f"grep -h '{timestamp}' latest.log* | grep -v '{timestamp_line}'"
-            )
-            logs_output = shell.run(logs_command, hide=True)
-            for line in logs_output.stdout.strip().split("\n"):
-                lines_with_timestamp.append(line)
+    latest_line = latest_line_output.stdout.strip()
 
-    # Send the filtered lines to Discord
-    await ctx.send("```\n" + "\n".join(lines_with_timestamp) + "\n```")
+    # Extract timestamp from the latest line
+    timestamp = latest_line.split("[")[1].split("]")[0]
+
+    # Search for lines with the same timestamp in the logs
+    lines_with_timestamp_command = (
+        f"grep -h '[{timestamp}]' logs/latest.log* | grep -v '{latest_line}'"
+    )
+    lines_with_timestamp_output = shell.run(lines_with_timestamp_command, hide=True)
+
+    lines_with_timestamp = lines_with_timestamp_output.stdout.strip()
+
+    # Send all lines with the same timestamp to Discord
+    await ctx.send("```\n" + lines_with_timestamp + "\n```")
+
 
 
 @client.command()
