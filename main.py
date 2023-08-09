@@ -76,10 +76,7 @@ async def lpedit(ctx):
     sanitized_last_lpedit_line = pattern.sub("", last_lpedit_line)
     sanitized_editor_link = pattern.sub("", editor_link)
 
-    formatted_message = "```python\n"
-    formatted_message += sanitized_last_lpedit_line + "\n"
-    formatted_message += sanitized_editor_link + "\n"
-    formatted_message += "```"
+    formatted_message = f"`{sanitized_last_lpedit_line}`\n{sanitized_editor_link}"
 
     await ctx.send(formatted_message)
 
