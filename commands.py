@@ -14,10 +14,16 @@ async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
+    # Execute ./minecraft_command.sh list via SSH
+    list_command = "./minecraft_command.sh list"
+    try:
+        shell.run(list_command, hide=True)
+    except Exception as e:
+        print(f"An error occurred while running the command: {e}")
+        pass
+
     # Find the last occurrence of "players online" in the logs
-    last_players_online_command = (
-        "grep 'players online' logs/latest.log* | tail -n 1"
-    )
+    last_players_online_command = "grep 'players online' logs/latest.log* | tail -n 1"
     last_players_online_output = shell.run(last_players_online_command, hide=True)
 
     last_players_online_line = last_players_online_output.stdout.strip()
@@ -26,21 +32,19 @@ async def list(ctx):
     last_timestamp = last_players_online_line.split("[")[1].split("]")[0]
 
     # Search for lines with the same timestamp in the logs
-    lines_with_timestamp_command = (
-        f"grep '\\[{last_timestamp}\\]' logs/latest.log* | grep -v 'CONSOLE issued server command: /list'"
-    )
+    lines_with_timestamp_command = f"grep '\\[{last_timestamp}\\]' logs/latest.log* | grep -v 'CONSOLE issued server command: /list'"
     lines_with_timestamp_output = shell.run(lines_with_timestamp_command, hide=True)
 
     lines_with_timestamp = lines_with_timestamp_output.stdout.strip().split("\n")
 
     # Sanitize and combine the lines into a single string
-    sanitized_lines = "\n".join(line.split("[Server thread/INFO]: ")[1] for line in lines_with_timestamp)
+    sanitized_lines = "\n".join(
+        line.split("[Server thread/INFO]: ")[1] for line in lines_with_timestamp
+    )
 
     # Send the sanitized and combined lines as a single message to Discord
     code_block = "```python\n" + sanitized_lines + "\n```"
     await ctx.send(code_block)
-
-
 
 
 @client.command()
