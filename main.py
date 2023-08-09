@@ -67,9 +67,9 @@ async def lpedit(ctx):
     # Send the last_lpedit_line and the next 2 lines after it to Discord
     formatted_message = f"```\n{last_lpedit_line}\n"
 
-    # Hardcode the next 2 lines
-    hardcoded_lines = shell.run("tail -n 2 logs/latest.log*", hide=True).stdout.strip()
-    formatted_message += f"{hardcoded_lines}\n```"
+    # Add line containing editor link
+    editor_link = shell.run("tail -n 1 logs/latest.log*", hide=True).stdout.strip()
+    formatted_message += f"{editor_link}\n```"
 
     await ctx.send(formatted_message)
 
