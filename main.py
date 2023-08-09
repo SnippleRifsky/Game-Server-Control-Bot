@@ -1,5 +1,6 @@
 import discord
-from fabric import exceptions
+from fabric import exceptions as fabric_exceptions
+from invoke import exceptions as invoke_exceptions
 from apikeys import *
 from ssh import init_ssh
 from discord.ext import commands
@@ -45,13 +46,13 @@ async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
-    # Execute the minecraft_command.sh "list" script
+    # Execute the minecraft_command.sh "list"
     list_command = "./minecraft_command.sh list"
+    
     try:
-        shell.run(list_command)
-    except exceptions.UnexpectedExit as e:
-        # Print the exception for debugging
-        print("Caught UnexpectedExit exception:", e)
+        shell.run(list_command, warn=True)  # Use warn=True to ignore non-zero exit code
+    except (fabric_exceptions.CommandTimedOut, invoke_exceptions.CommandTimedOut):
+        pass  # Handle the exception as you see fit
 
 
     # Extract the timestamp from the log
