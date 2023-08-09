@@ -34,10 +34,9 @@ async def list(ctx):
     lines_with_timestamp = lines_with_timestamp_output.stdout.strip().split("\n")
 
     # Send the filtered lines to Discord
-    max_line_length = 200  # Max characters per line
     for line in lines_with_timestamp:
-        truncated_line = line[:max_line_length]
-        await ctx.send("```\n" + truncated_line + "\n```")
+        await ctx.send("```\n" + line + "\n```")
+
 
 
 
