@@ -1,4 +1,5 @@
 import discord
+from fabric import exceptions
 from client import init_client
 from discord.utils import get
 from discord.ext import commands
@@ -12,13 +13,13 @@ async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
+    # Execute the minecraft_command.sh "list" script
+    list_command = "./minecraft_command.sh list"
     try:
-        # Execute the minecraft_command.sh "list"
-        list_command = "./minecraft_command.sh 'list'"
         shell.run(list_command)
-    except Exception as e:
-        await ctx.send(f"An error occurred while executing the command: {e}")
-        return
+    except exceptions.UnexpectedExit as e:
+        # Print the exception for debugging
+        print("Caught UnexpectedExit exception:", e)
 
     # Extract the timestamp from the log
     timestamp_line = None

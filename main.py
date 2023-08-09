@@ -1,4 +1,5 @@
 import discord
+from fabric import exceptions
 from apikeys import *
 from ssh import init_ssh
 from discord.ext import commands
@@ -44,13 +45,13 @@ async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
+    # Execute the minecraft_command.sh "list" script
+    list_command = "./minecraft_command.sh list"
     try:
-        # Execute the minecraft_command.sh "list"
-        list_command = "./minecraft_command.sh 'list'"
         shell.run(list_command)
-    except Exception as e:
-        await ctx.send(f"An error occurred while executing the command: {e}")
-        return
+    except exceptions.UnexpectedExit as e:
+        # Print the exception for debugging
+        print("Caught UnexpectedExit exception:", e)
 
 
     # Extract the timestamp from the log
@@ -84,7 +85,7 @@ async def tps(ctx):
     await ctx.send("Fetching server TPS...")
 
     # Read the logfile and extract the latest TPS line
-    tps_command = "grep 'TPS' logs/latest.log | tail -n 1"
+    tps_command = "grep TPS logs/latest.log | tail -n 1"
     line = shell.run(tps_command, hide=True)  # Hide command output
 
     tps_line = line.stdout.strip()  # Get the stdout from the response
