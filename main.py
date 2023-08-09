@@ -44,9 +44,14 @@ async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
 
-    # Execute the minecraft_command.sh "list"
-    list_command = "./minecraft_command.sh 'list'"
-    shell.run(list_command)
+    try:
+        # Execute the minecraft_command.sh "list"
+        list_command = "./minecraft_command.sh 'list'"
+        shell.run(list_command)
+    except Exception as e:
+        await ctx.send(f"An error occurred while executing the command: {e}")
+        return
+
 
     # Extract the timestamp from the log
     timestamp_line = None
