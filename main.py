@@ -79,6 +79,34 @@ async def lpedit(ctx):
     formatted_message = f"`{sanitized_last_lpedit_line}`\n{sanitized_editor_link}"
 
     await ctx.send(formatted_message)
+    await ctx.send("If the session needs to be trusted, use `!lptrust`")
+
+
+@client.command()
+@commands.has_role("Server Op")
+async def lptrust(ctx):
+    shell = ctx.bot.extra_events["shell"]
+
+    # Find the last occurrence of "If it was you, run" line in the logs
+    lptrust_command = "grep 'If it was you, run' logs/latest.log* | tail -n 1"
+    lptrust_output = shell.run(lptrust_command, hide=True).stdout.strip()
+
+    # Extract the session_key from the line using regular expressions
+    pattern = re.compile(r"run (.* )?to")
+    match = pattern.search(lptrust_output)
+    if match:
+        session_key = match.group(1).strip()
+
+        # Execute ./minecraft_command.sh 'session_key' via SSH
+        trust_command = f"./minecraft_command.sh '{session_key}'"
+        try:
+            shell.run(trust_command, hide=True)
+            await ctx.send(f"Successfully executed the command: {trust_command}")
+        except Exception as e:
+            print(f"An error occurred while running the command: {e}")
+            await ctx.send(f"An error occurred while running the command: {e}")
+    else:
+        await ctx.send("No suitable session key found in the logs.")
 
 
 @client.command()
