@@ -71,6 +71,13 @@ async def lpedit(ctx):
     editor_link = shell.run("tail -n 1 logs/latest.log*", hide=True).stdout.strip()
     formatted_message += f"{editor_link}\n```"
 
+    # Sanitize and format the output
+    sanitized_lines = [line.replace("[12:41:52] [luckperms-command-executor/INFO]:", "") for line in hardcoded_lines.split("\n")]
+    formatted_message = "```python\n"
+    formatted_message += last_lpedit_line + "\n"
+    formatted_message += "\n".join(sanitized_lines) + "\n"
+    formatted_message += "```"
+
     await ctx.send(formatted_message)
 
 
