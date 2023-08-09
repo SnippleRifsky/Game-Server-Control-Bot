@@ -71,12 +71,12 @@ async def list(ctx):
     )
     lines_with_timestamp_output = shell.run(lines_with_timestamp_command, hide=True)
 
-    lines_with_timestamp = lines_with_timestamp_output.stdout.strip()
+    lines_with_timestamp = lines_with_timestamp_output.stdout.strip().split("\n")
 
     # Split content into smaller chunks and send them individually
-    chunk_size = 2000  # Max length of each chunk
+    chunk_size = 20  # Max number of lines per chunk
     for i in range(0, len(lines_with_timestamp), chunk_size):
-        chunk = lines_with_timestamp[i : i + chunk_size]
+        chunk = "\n".join(lines_with_timestamp[i : i + chunk_size])
         await ctx.send("```\n" + chunk + "\n```")
 
 
