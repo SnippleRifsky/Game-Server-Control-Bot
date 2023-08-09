@@ -1,4 +1,5 @@
 import discord
+import time
 from fabric import exceptions as fabric_exceptions
 from invoke import exceptions as invoke_exceptions
 from apikeys import *
@@ -39,6 +40,7 @@ async def on_ready():
     print("Bot Initialized")
     print("------------------------------")
 
+
 @client.command()
 @commands.has_role("Server Op")
 async def lpedit(ctx):
@@ -52,8 +54,12 @@ async def lpedit(ctx):
         print(f"An error occurred while running the command: {e}")
         pass
 
+    time.sleep(1)
+
     # Find the last occurrence of new lp editor session in the logs
-    last_lpedit_command = "grep 'Preparing a new editor session' logs/latest.log* | tail -n 1"
+    last_lpedit_command = (
+        "grep 'Preparing a new editor session' logs/latest.log* | tail -n 1"
+    )
     last_lpedit_output = shell.run(last_lpedit_command, hide=True)
 
     last_lpedit_line = last_lpedit_output.stdout.strip()
