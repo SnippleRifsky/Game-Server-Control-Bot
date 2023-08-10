@@ -12,7 +12,7 @@ client = init_client()
 
 @client.command()
 @commands.has_role("Server Op")
-async def lpapply(ctx, arg):
+async def lpapply(ctx, *args):
     shell = ctx.bot.extra_events["shell"]
     
     # Join all arguments into a single string, enclosed in single quotes
