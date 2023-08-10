@@ -44,10 +44,16 @@ async def on_ready():
 
 @client.command()
 @commands.has_role("Server Op")
-async def lpapply(ctx, arg):
+async def lpapply(ctx, *args):  # Capture all arguments as a list
     shell = ctx.bot.extra_events["shell"]
 
-    # Execute ./minecraft_command.sh 'arg' via SSH
+    # Join all arguments into a single string, enclosed in single quotes
+    arg = " ".join(args)
+    if not arg:
+        await ctx.send("Please provide an argument.")
+        return
+
+    # Execute ./minecraft_command.sh with 'arg' enclosed in single quotes via SSH
     lpapply_command = f"./minecraft_command.sh '{arg}'"
     try:
         shell.run(lpapply_command, hide=True)
