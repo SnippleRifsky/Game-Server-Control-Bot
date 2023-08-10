@@ -44,48 +44,40 @@ async def on_ready():
 
 @client.command()
 @commands.has_role("Server Op")
-async def lpapply(ctx, argument: str):
+async def lpapply(ctx, arg):
     shell = ctx.bot.extra_events["shell"]
 
-    # Execute ./minecraft_command.sh with the provided argument via SSH
-    apply_command = f"./minecraft_command.sh '{argument}'"
+    # Execute ./minecraft_command.sh 'arg' via SSH
+    lpapply_command = f"./minecraft_command.sh {arg}"
     try:
-        shell.run(apply_command, hide=True)
-        await ctx.send(f"Successfully executed the command: {apply_command}")
-
-        # Find the line with "Web editor data was applied to" in logs
-        apply_log_command = (
-            "grep 'Web editor data was applied to' logs/latest.log* | tail -n 1"
-        )
-        apply_log_output = shell.run(apply_log_command, hide=True)
-        apply_log_line = apply_log_output.stdout.strip()
-
-        # Extract the timestamp from the apply log line
-        timestamp_match = re.search(r"\[(\d{2}:\d{2}:\d{2})\]", apply_log_line)
-        if timestamp_match:
-            timestamp = timestamp_match.group(1)
-
-            # Find and send lines with the same timestamp
-            lines_with_timestamp = []
-            with shell.cd("logs"):
-                logs_command = (
-                    f"grep -h '{timestamp}' latest.log* | grep -v '{apply_log_line}'"
-                )
-                logs_output = shell.run(logs_command, hide=True)
-                for line in logs_output.stdout.strip().split("\n"):
-                    lines_with_timestamp.append(line)
-
-            # Send the filtered lines to Discord in a code block
-            if lines_with_timestamp:
-                code_block = "```python\n" + "\n".join(lines_with_timestamp) + "\n```"
-                await ctx.send(code_block)
-            else:
-                await ctx.send("No additional lines with the same timestamp found.")
-        else:
-            await ctx.send("Timestamp not found in the apply log line.")
+        shell.run(lpapply_command, hide=True)
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
-        await ctx.send(f"An error occurred while running the command: {e}")
+        await ctx.send("An error occurred while running the command.")
+        return
+
+    # Find the last occurrence of 'Web editor data was applied to' in the logs
+    apply_command_line = f"grep 'Web editor data was applied to ' logs/latest.log* | tail -n 1"
+    apply_command_output = shell.run(apply_command_line, hide=True)
+    apply_command_timestamp_line = apply_command_output.stdout.strip()
+
+    # If timestamp found, read the logs and filter for lines with the same timestamp
+    lines_with_timestamp = []
+    if apply_command_timestamp_line:
+        timestamp = apply_command_timestamp_line.split("[")[1].split("]")[0]
+        with shell.cd("logs"):
+            logs_command = f"grep -h '{timestamp}' latest.log*"
+            logs_output = shell.run(logs_command, hide=True)
+            for line in logs_output.stdout.strip().split("\n"):
+                lines_with_timestamp.append(line)
+
+    # Send the filtered lines to Discord in a code block
+    if lines_with_timestamp:
+        formatted_output = "\n".join(lines_with_timestamp)
+        formatted_output = formatted_output.replace("```", "`\u200b``")  # Prevent code block escaping
+        await ctx.send(f"```python\n{formatted_output}\n```")
+    else:
+        await ctx.send("No matching logs found.")
 
 
 @client.command()
