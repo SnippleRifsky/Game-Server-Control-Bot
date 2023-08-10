@@ -12,9 +12,9 @@ client = init_client()
 
 @client.command()
 @commands.has_role("Server Op")
-async def lpapply(ctx, *args):
+async def lpapply(ctx, *args):  # Capture all arguments as a list
     shell = ctx.bot.extra_events["shell"]
-    
+
     # Join all arguments into a single string, enclosed in single quotes
     arg = " ".join(args)
     if not arg:
@@ -29,40 +29,38 @@ async def lpapply(ctx, *args):
         print(f"An error occurred while running the command: {e}")
         await ctx.send("An error occurred while running the command.")
         return
-    
-    # Check if the session expired warning is present
-    session_expired_command = f"grep -A 2 '{arg}' logs/latest.log | grep 'The changes received from the web editor are based'"
-    session_expired_output = shell.run(session_expired_command, hide=True)
-    
-    session_expired_line = session_expired_output.stdout.strip()
-    
-    # If the session expired warning is found, return the following 3 lines
-    if session_expired_line:
-        session_expired_lines = session_expired_line.split('\n')
-        await ctx.send("```" + '\n'.join(session_expired_lines) + "```")
-        return
-    
-    # Find the last occurrence of web editor data being applied in the logs
-    last_apply_command = f"grep 'Web editor data was applied to' logs/latest.log* | tail -n 1"
-    last_apply_output = shell.run(last_apply_command, hide=True)
-    
-    last_apply_line = last_apply_output.stdout.strip()
-    
-    # Extract the timestamp from the log
-    timestamp_line = last_apply_line
-    
+
+    # Find the last occurrence of 'Web editor data was applied to' in the logs
+    apply_command_line = f"grep 'Web editor data was applied to ' logs/latest.log* | tail -n 1"
+    apply_command_output = shell.run(apply_command_line, hide=True)
+    apply_command_timestamp_line = apply_command_output.stdout.strip()
+
     # If timestamp found, read the logs and filter for lines with the same timestamp
     lines_with_timestamp = []
-    if timestamp_line:
-        timestamp = timestamp_line.split("[")[1].split("]")[0]
+    if apply_command_timestamp_line:
+        timestamp = apply_command_timestamp_line.split("[")[1].split("]")[0]
         with shell.cd("logs"):
-            logs_command = f"grep -h '{timestamp}' latest.log* | grep -v '{timestamp_line}'"
+            logs_command = f"grep -h '{timestamp}' latest.log*"
             logs_output = shell.run(logs_command, hide=True)
             for line in logs_output.stdout.strip().split("\n"):
                 lines_with_timestamp.append(line)
-    
-    # Send the filtered lines to Discord
-    await ctx.send("```python\n" + "\n".join(lines_with_timestamp) + "\n```")
+
+    # Prepare formatted output
+    formatted_output = "\n".join(lines_with_timestamp)
+    formatted_output = formatted_output.replace("```", "`\u200b``")  # Prevent code block escaping
+
+    # Check for specific line and its following lines
+    session_expired_line = "[LP] The changes received from the web editor are based"
+    if session_expired_line in formatted_output:
+        lines_to_send = formatted_output.split("\n")
+        session_expired_index = lines_to_send.index(session_expired_line)
+        lines_to_send = lines_to_send[session_expired_index:session_expired_index + 3]
+        formatted_output = "\n".join(lines_to_send)
+    else:
+        formatted_output = f"```python\n{formatted_output}\n```"
+
+    # Send the formatted output to Discord
+    await ctx.send(formatted_output)
 
 
 
