@@ -54,13 +54,18 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
     if session_expired_line in formatted_output:
         lines_to_send = formatted_output.split("\n")
         session_expired_index = lines_to_send.index(session_expired_line)
-        lines_to_send = lines_to_send[session_expired_index:session_expired_index + 3]
-        formatted_output = "\n".join(lines_to_send)
+        
+        # Check if the session_expired_line is after the provided argument in the log
+        arg_index = lines_to_send.index(arg)
+        if session_expired_index > arg_index:
+            lines_to_send = lines_to_send[session_expired_index:]
+            formatted_output = "\n".join(lines_to_send)
+            formatted_output = formatted_output.replace("```", "`\u200b``")  # Prevent code block escaping
+            await ctx.send("```\n" + formatted_output + "\n```")
+        else:
+            await ctx.send(f"```python\n{formatted_output}\n```")
     else:
-        formatted_output = f"```python\n{formatted_output}\n```"
-
-    # Send the formatted output to Discord
-    await ctx.send(formatted_output)
+        await ctx.send(f"```python\n{formatted_output}\n```")
 
 
 
