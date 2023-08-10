@@ -12,6 +12,52 @@ client = init_client()
 
 @client.command()
 @commands.has_role("Server Op")
+async def lpapply(ctx, argument: str):
+    shell = ctx.bot.extra_events["shell"]
+
+    # Execute ./minecraft_command.sh with the provided argument via SSH
+    apply_command = f"./minecraft_command.sh '{argument}'"
+    try:
+        shell.run(apply_command, hide=True)
+        await ctx.send(f"Successfully executed the command: {apply_command}")
+
+        # Find the line with "Web editor data was applied to" in logs
+        apply_log_command = (
+            "grep 'Web editor data was applied to' logs/latest.log* | tail -n 1"
+        )
+        apply_log_output = shell.run(apply_log_command, hide=True)
+        apply_log_line = apply_log_output.stdout.strip()
+
+        # Extract the timestamp from the apply log line
+        timestamp_match = re.search(r"\[(\d{2}:\d{2}:\d{2})\]", apply_log_line)
+        if timestamp_match:
+            timestamp = timestamp_match.group(1)
+
+            # Find and send lines with the same timestamp
+            lines_with_timestamp = []
+            with shell.cd("logs"):
+                logs_command = (
+                    f"grep -h '{timestamp}' latest.log* | grep -v '{apply_log_line}'"
+                )
+                logs_output = shell.run(logs_command, hide=True)
+                for line in logs_output.stdout.strip().split("\n"):
+                    lines_with_timestamp.append(line)
+
+            # Send the filtered lines to Discord in a code block
+            if lines_with_timestamp:
+                code_block = "```python\n" + "\n".join(lines_with_timestamp) + "\n```"
+                await ctx.send(code_block)
+            else:
+                await ctx.send("No additional lines with the same timestamp found.")
+        else:
+            await ctx.send("Timestamp not found in the apply log line.")
+    except Exception as e:
+        print(f"An error occurred while running the command: {e}")
+        await ctx.send(f"An error occurred while running the command: {e}")
+
+
+@client.command()
+@commands.has_role("Server Op")
 async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
