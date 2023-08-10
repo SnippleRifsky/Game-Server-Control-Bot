@@ -48,7 +48,7 @@ async def lpapply(ctx, arg):
     shell = ctx.bot.extra_events["shell"]
 
     # Execute ./minecraft_command.sh 'arg' via SSH
-    lpapply_command = f"./minecraft_command.sh {arg}"
+    lpapply_command = f"./minecraft_command.sh '{arg}'"
     try:
         shell.run(lpapply_command, hide=True)
     except Exception as e:
