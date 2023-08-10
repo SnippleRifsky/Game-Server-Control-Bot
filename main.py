@@ -76,37 +76,24 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
             logs_output = shell.run(logs_command, hide=True)
             for line in logs_output.stdout.strip().split("\n"):
                 lines_with_timestamp.append(line)
-    else:
-        # Check for specific line and its following lines
-        session_expired_line = "[LP] The changes received from the web editor are based"
-        if session_expired_line in formatted_output:
-            lines_to_send = formatted_output.split("\n")
-            session_expired_index = lines_to_send.index(session_expired_line)
-            lines_to_send = lines_to_send[session_expired_index:session_expired_index + 3]
-            await ctx.send("\n".join(lines_to_send))
+
+    # Check for specific line and its following lines
+    session_expired_line = "[LP] The changes received from the web editor are based"
+    if session_expired_line in lines_with_timestamp:
+        session_expired_index = lines_with_timestamp.index(session_expired_line)
+        
+        # Check if the session_expired_line is after the provided argument in the log
+        arg_index = lines_with_timestamp.index(arg)
+        if session_expired_index > arg_index:
+            lines_to_send = lines_with_timestamp[session_expired_index:]
+            await ctx.send("```\n" + "\n".join(lines_to_send) + "\n```")
             return
 
     # Prepare formatted output
     formatted_output = "\n".join(lines_with_timestamp)
     formatted_output = formatted_output.replace("```", "`\u200b``")  # Prevent code block escaping
+    await ctx.send(f"```python\n{formatted_output}\n```")
 
-    # Check for specific line and its following lines
-    session_expired_line = "[LP] The changes received from the web editor are based"
-    if session_expired_line in formatted_output:
-        lines_to_send = formatted_output.split("\n")
-        session_expired_index = lines_to_send.index(session_expired_line)
-        
-        # Check if the session_expired_line is after the provided argument in the log
-        arg_index = lines_to_send.index(arg)
-        if session_expired_index > arg_index:
-            lines_to_send = lines_to_send[session_expired_index:]
-            formatted_output = "\n".join(lines_to_send)
-            formatted_output = formatted_output.replace("```", "`\u200b``")  # Prevent code block escaping
-            await ctx.send("```\n" + formatted_output + "\n```")
-        else:
-            await ctx.send(f"```python\n{formatted_output}\n```")
-    else:
-        await ctx.send(f"```python\n{formatted_output}\n```")
 
 
 
