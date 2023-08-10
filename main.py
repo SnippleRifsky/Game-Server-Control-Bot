@@ -76,20 +76,15 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
             logs_output = shell.run(logs_command, hide=True)
             for line in logs_output.stdout.strip().split("\n"):
                 lines_with_timestamp.append(line)
-
-    # If timestamp found, read the logs and filter for lines with the same timestamp
-    lines_with_timestamp = []
-    if apply_command_timestamp_line:
-        timestamp = apply_command_timestamp_line.split("[")[1].split("]")[0]
-        with shell.cd("logs"):
-            logs_command = f"grep -h '{timestamp}' latest.log*"
-            logs_output = shell.run(logs_command, hide=True)
-            for line in logs_output.stdout.strip().split("\n"):
-                lines_with_timestamp.append(line)
-
-    # Prepare formatted output
-    formatted_output = "\n".join(lines_with_timestamp)
-    formatted_output = formatted_output.replace("```", "`\u200b``")  # Prevent code block escaping
+    else:
+        # Check for specific line and its following lines
+        session_expired_line = "[LP] The changes received from the web editor are based"
+        if session_expired_line in formatted_output:
+            lines_to_send = formatted_output.split("\n")
+            session_expired_index = lines_to_send.index(session_expired_line)
+            lines_to_send = lines_to_send[session_expired_index:session_expired_index + 3]
+            await ctx.send("\n".join(lines_to_send))
+            return
 
     # Prepare formatted output
     formatted_output = "\n".join(lines_with_timestamp)
