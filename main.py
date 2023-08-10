@@ -47,13 +47,20 @@ async def on_ready():
 async def lpapply(ctx, arg):
     shell = ctx.bot.extra_events["shell"]
     
-    # Execute ./minecraft_command.sh 'session_key' via SSH
-    lpapply_command = f"./minecraft_command.sh {arg}"
+    # Join all arguments into a single string, enclosed in single quotes
+    arg = " ".join(args)
+    if not arg:
+        await ctx.send("Please provide an argument.")
+        return
+
+    # Execute ./minecraft_command.sh with 'arg' enclosed in single quotes via SSH
+    lpapply_command = f"./minecraft_command.sh '{arg}'"
     try:
         shell.run(lpapply_command, hide=True)
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
-        pass
+        await ctx.send("An error occurred while running the command.")
+        return
     
     # Check if the session expired warning is present
     session_expired_command = f"grep -A 2 '{arg}' logs/latest.log | grep 'The changes received from the web editor are based'"
