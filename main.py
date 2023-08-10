@@ -62,10 +62,20 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
         await ctx.send("An error occurred while running the command.")
         return
 
-    # Find the last occurrence of 'Web editor data was applied to' in the logs
-    apply_command_line = f"grep 'Web editor data was applied to ' logs/latest.log* | tail -n 1"
+    # Find the last occurrence of 'Web editor data was applied to' in the logs after the argument line
+    apply_command_line = f"grep -A 1 '{arg}' logs/latest.log | grep 'Web editor data was applied to ' | tail -n 1"
     apply_command_output = shell.run(apply_command_line, hide=True)
     apply_command_timestamp_line = apply_command_output.stdout.strip()
+
+    # If timestamp found, read the logs and filter for lines with the same timestamp
+    lines_with_timestamp = []
+    if apply_command_timestamp_line:
+        timestamp = apply_command_timestamp_line.split("[")[1].split("]")[0]
+        with shell.cd("logs"):
+            logs_command = f"grep -h '{timestamp}' latest.log*"
+            logs_output = shell.run(logs_command, hide=True)
+            for line in logs_output.stdout.strip().split("\n"):
+                lines_with_timestamp.append(line)
 
     # If timestamp found, read the logs and filter for lines with the same timestamp
     lines_with_timestamp = []
