@@ -12,7 +12,7 @@ client = init_client()
 
 @client.command()
 @commands.has_role("Server Op")
-async def lpapply(ctx, *args):
+async def lpapply(ctx, *args):  # Capture all arguments as a list
     shell = ctx.bot.extra_events["shell"]
 
     # Join all arguments into a single string, enclosed in single quotes
@@ -30,20 +30,8 @@ async def lpapply(ctx, *args):
         await ctx.send("An error occurred while running the command.")
         return
 
-    # Find the last occurrence of the provided argument in the logs
-    arg_line_command = f"grep -n '{arg}' logs/latest.log | tail -n 1"
-    arg_line_output = shell.run(arg_line_command, hide=True)
-    arg_line_parts = arg_line_output.stdout.strip().split(":", 1)
-    
-    if len(arg_line_parts) != 2:
-        await ctx.send(f"Could not find the argument '{arg}' in the logs.")
-        return
-
-    # Get the line number of the provided argument
-    arg_line_number = int(arg_line_parts[0])
-
-    # Find the last occurrence of 'Web editor data was applied to' after the argument line
-    apply_command_line = f"sed '{arg_line_number},$!d' logs/latest.log | grep -A 1 'Web editor data was applied to ' | tail -n 1"
+    # Find the last occurrence of 'Web editor data was applied to' in the logs after the argument line
+    apply_command_line = f"grep -A 1 '{arg}' logs/latest.log | grep 'Web editor data was applied to ' | tail -n 1"
     apply_command_output = shell.run(apply_command_line, hide=True)
     apply_command_timestamp_line = apply_command_output.stdout.strip()
 
@@ -61,18 +49,20 @@ async def lpapply(ctx, *args):
     session_expired_line = "[LP] The changes received from the web editor are based"
     if session_expired_line in lines_with_timestamp:
         session_expired_index = lines_with_timestamp.index(session_expired_line)
-
+        
         # Check if the session_expired_line is after the provided argument in the log
         arg_index = lines_with_timestamp.index(arg)
         if session_expired_index > arg_index:
-            lines_to_send = lines_with_timestamp[session_expired_index:session_expired_index + 3]
-            await ctx.send("```\n" + "\n".join(lines_to_send) + "\n```")
-            return
+            lines_to_send = lines_with_timestamp[session_expired_index:]
+            discord_output = "```\n" + "\n".join(lines_to_send) + "\n```"
+        else:
+            discord_output = f"```python\n{formatted_output}\n```"
+    else:
+        discord_output = f"```python\n{formatted_output}\n```"
 
-    # Prepare formatted output
-    formatted_output = "\n".join(lines_with_timestamp)
-    formatted_output = formatted_output.replace("```", "`\u200b``")  # Prevent code block escaping
-    await ctx.send(f"```python\n{formatted_output}\n```")
+    # Send the prepared output to Discord
+    await ctx.send(discord_output)
+
 
 
 
