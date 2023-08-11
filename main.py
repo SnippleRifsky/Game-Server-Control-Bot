@@ -76,6 +76,8 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
         if (
             "Web editor data was applied to " in line
             or "[LP] The changes received from the web editor are based" in line
+            or "[LP] No changes were applied from the web editor, the returned data didn't contain any edits."
+            in line
         ):
             relevant_logs.append(line)
             if "[LP] The changes received from the web editor are based" in line:

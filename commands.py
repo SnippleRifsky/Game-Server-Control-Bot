@@ -41,16 +41,21 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
 
     # Process the logs and capture the first relevant message
     for i, line in enumerate(logs_lines):
-        if "Web editor data was applied to " in line or "[LP] The changes received from the web editor are based" in line:
+        if (
+            "Web editor data was applied to " in line
+            or "[LP] The changes received from the web editor are based" in line
+            or "[LP] No changes were applied from the web editor, the returned data didn't contain any edits."
+            in line
+        ):
             relevant_logs.append(line)
             if "[LP] The changes received from the web editor are based" in line:
                 # For session expired message, also capture the next 2 lines
-                relevant_logs.extend(logs_lines[i+1:i+3])
+                relevant_logs.extend(logs_lines[i + 1 : i + 3])
             else:
                 # For success message, capture all lines with the same timestamp
                 timestamp = line.split("[")[1].split("]")[0]
                 timestamp_logs = []
-                for next_line in logs_lines[i+1:]:
+                for next_line in logs_lines[i + 1 :]:
                     if f"[{timestamp}" in next_line:
                         timestamp_logs.append(next_line)
                 relevant_logs.extend(timestamp_logs)
@@ -63,7 +68,6 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
         await ctx.send(f"```python\n{output}\n```")
     else:
         await ctx.send("No relevant logs found.")
-
 
 
 @client.command()
