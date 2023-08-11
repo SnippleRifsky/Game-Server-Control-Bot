@@ -30,36 +30,26 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
         await ctx.send("An error occurred while running the command.")
         return
 
-    # Read the latest.log file directly and process the lines
+    # Read the latest.log file directly and process the lines in reverse order
     with shell.cd("logs"):
-        logs_command = "tail -n 100 latest.log"
+        logs_command = "tac latest.log | head -n 100"
         logs_output = shell.run(logs_command, hide=True)
         logs_lines = logs_output.stdout.strip().split("\n")
 
     # Prepare lists to store success and session expired logs
-    success_logs = []
-    session_expired_logs = []
+    relevant_logs = []
 
-    # Process the logs and separate them into success and session expired lists
+    # Process the logs and capture the first relevant message
     for line in logs_lines:
-        if "Web editor data was applied to " in line:
-            success_logs.append(line)
-        elif "[LP] The changes received from the web editor are based" in line:
-            session_expired_logs.append(line)
+        if "Web editor data was applied to " in line or "[LP] The changes received from the web editor are based" in line:
+            relevant_logs.append(line)
+            break  # Stop processing after the first relevant message
 
     # Prepare the final output to be sent to Discord
-    if success_logs:
-        success_output = "\n".join(success_logs)
-        success_output = success_output.replace(
-            "```", "`\u200b``"
-        )  # Prevent code block escaping
-        await ctx.send(f"```python\n{success_output}\n```")
-    elif session_expired_logs:
-        session_expired_output = "\n".join(session_expired_logs)
-        session_expired_output = session_expired_output.replace(
-            "```", "`\u200b``"
-        )  # Prevent code block escaping
-        await ctx.send(f"```python\n{session_expired_output}\n```")
+    if relevant_logs:
+        output = "\n".join(relevant_logs)
+        output = output.replace("```", "`\u200b``")  # Prevent code block escaping
+        await ctx.send(f"```python\n{output}\n```")
     else:
         await ctx.send("No relevant logs found.")
 
