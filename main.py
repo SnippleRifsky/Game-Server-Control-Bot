@@ -62,38 +62,38 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
         await ctx.send("An error occurred while running the command.")
         return
 
-    # Find the last occurrence of 'Web editor data was applied to' in the logs after the argument line
-    apply_command_line = f"grep -A 1 '{arg}' logs/latest.log | grep 'Web editor data was applied to ' | tail -n 1"
-    apply_command_output = shell.run(apply_command_line, hide=True)
-    apply_command_timestamp_line = apply_command_output.stdout.strip()
+    # Read the latest.log file directly and process the lines
+    with shell.cd("logs"):
+        logs_command = "tail -n 100 latest.log"
+        logs_output = shell.run(logs_command, hide=True)
+        logs_lines = logs_output.stdout.strip().split("\n")
 
-    # If timestamp found, read the logs and filter for lines with the same timestamp
-    lines_with_timestamp = []
-    if apply_command_timestamp_line:
-        timestamp = apply_command_timestamp_line.split("[")[1].split("]")[0]
-        with shell.cd("logs"):
-            logs_command = f"grep -h '{timestamp}' latest.log*"
-            logs_output = shell.run(logs_command, hide=True)
-            for line in logs_output.stdout.strip().split("\n"):
-                lines_with_timestamp.append(line)
+    # Prepare lists to store success and session expired logs
+    success_logs = []
+    session_expired_logs = []
 
-    # Check for specific line and its following lines
-    session_expired_line = "[LP] The changes received from the web editor are based"
-    if session_expired_line in lines_with_timestamp:
-        session_expired_index = lines_with_timestamp.index(session_expired_line)
-        
-        # Check if the session_expired_line is after the provided argument in the log
-        arg_index = lines_with_timestamp.index(arg)
-        if session_expired_index > arg_index:
-            lines_to_send = lines_with_timestamp[session_expired_index:]
-            discord_output = "```\n" + "\n".join(lines_to_send) + "\n```"
-        else:
-            discord_output = "```python\n" + "\n".join(lines_with_timestamp) + "\n```"
+    # Process the logs and separate them into success and session expired lists
+    for line in logs_lines:
+        if "Web editor data was applied to " in line:
+            success_logs.append(line)
+        elif "[LP] The changes received from the web editor are based" in line:
+            session_expired_logs.append(line)
+
+    # Prepare the final output to be sent to Discord
+    if success_logs:
+        success_output = "\n".join(success_logs)
+        success_output = success_output.replace(
+            "```", "`\u200b``"
+        )  # Prevent code block escaping
+        await ctx.send(f"```python\n{success_output}\n```")
+    elif session_expired_logs:
+        session_expired_output = "\n".join(session_expired_logs)
+        session_expired_output = session_expired_output.replace(
+            "```", "`\u200b``"
+        )  # Prevent code block escaping
+        await ctx.send(f"```python\n{session_expired_output}\n```")
     else:
-        discord_output = "```python\n" + "\n".join(lines_with_timestamp) + "\n```"
-
-    # Send the prepared output to Discord
-    await ctx.send(discord_output)
+        await ctx.send("No relevant logs found.")
 
 
 @client.command()
