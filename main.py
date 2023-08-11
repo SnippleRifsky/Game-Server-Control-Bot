@@ -62,43 +62,42 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
         await ctx.send("An error occurred while running the command.")
         return
 
-    # Find the last occurrence of 'Web editor data was applied to' or 'The changes received from the web editor are based' in the logs after the argument line
-    apply_command_line = f"grep -A 1 '{arg}' logs/latest.log | grep -E 'Web editor data was applied to |The changes received from the web editor are based' | tail -n 1"
-    apply_command_output = shell.run(apply_command_line, hide=True)
-    apply_command_timestamp_line = apply_command_output.stdout.strip()
+    # Read the latest.log file directly and process the lines in reverse order
+    with shell.cd("logs"):
+        logs_command = "tac latest.log | head -n 100"
+        logs_output = shell.run(logs_command, hide=True)
+        logs_lines = logs_output.stdout.strip().split("\n")
 
-    # If timestamp found, read the logs and filter for lines with the same timestamp
-    lines_with_timestamp = []
-    if apply_command_timestamp_line:
-        timestamp = apply_command_timestamp_line.split("[")[1].split("]")[0]
-        with shell.cd("logs"):
-            logs_command = f"grep -h '{timestamp}' latest.log*"
-            logs_output = shell.run(logs_command, hide=True)
-            for line in logs_output.stdout.strip().split("\n"):
-                lines_with_timestamp.append(line)
+    # Prepare lists to store success and session expired logs
+    relevant_logs = []
 
-    # Check for specific lines and their following lines
-    success_line = "[LP] Web editor data was applied to "
-    session_expired_line = "[LP] The changes received from the web editor are based"
-    if success_line in apply_command_timestamp_line:
-        success_index = lines_with_timestamp.index(apply_command_timestamp_line)
+    # Process the logs and capture the first relevant message
+    for i, line in enumerate(logs_lines):
+        if (
+            "Web editor data was applied to " in line
+            or "[LP] The changes received from the web editor are based" in line
+        ):
+            relevant_logs.append(line)
+            if "[LP] The changes received from the web editor are based" in line:
+                # For session expired message, also capture the next 2 lines
+                relevant_logs.extend(logs_lines[i + 1 : i + 3])
+            else:
+                # For success message, capture all lines with the same timestamp
+                timestamp = line.split("[")[1].split("]")[0]
+                timestamp_logs = []
+                for next_line in logs_lines[i + 1 :]:
+                    if f"[{timestamp}" in next_line:
+                        timestamp_logs.append(next_line)
+                relevant_logs.extend(timestamp_logs)
+            break  # Stop processing after the first relevant message
 
-        # Find lines with the same timestamp as the success line
-        success_timestamp = apply_command_timestamp_line.split("[")[1].split("]")[0]
-        success_lines_to_send = []
-        for line in lines_with_timestamp:
-            if success_timestamp in line:
-                success_lines_to_send.append(line)
-
-        await ctx.send("```\n" + "\n".join(success_lines_to_send) + "\n```")
-    elif session_expired_line in apply_command_timestamp_line:
-        session_expired_index = lines_with_timestamp.index(apply_command_timestamp_line)
-        lines_to_send = lines_with_timestamp[
-            session_expired_index : session_expired_index + 3
-        ]
-        await ctx.send("```\n" + "\n".join(lines_to_send) + "\n```")
+    # Prepare the final output to be sent to Discord
+    if relevant_logs:
+        output = "\n".join(relevant_logs)
+        output = output.replace("```", "`\u200b``")  # Prevent code block escaping
+        await ctx.send(f"```python\n{output}\n```")
     else:
-        await ctx.send("No matching logs found.")
+        await ctx.send("No relevant logs found.")
 
 
 @client.command()
