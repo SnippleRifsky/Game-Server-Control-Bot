@@ -56,13 +56,12 @@ async def lpapply(ctx, *args):  # Capture all arguments as a list
             lines_to_send = lines_with_timestamp[session_expired_index:]
             discord_output = "```\n" + "\n".join(lines_to_send) + "\n```"
         else:
-            discord_output = f"```python\n{'\n'.join(lines_with_timestamp)}\n```"
+            discord_output = "```python\n" + "\n".join(lines_with_timestamp) + "\n```"
     else:
-        discord_output = f"```python\n{'\n'.join(lines_with_timestamp)}\n```"
+        discord_output = "```python\n" + "\n".join(lines_with_timestamp) + "\n```"
 
     # Send the prepared output to Discord
     await ctx.send(discord_output)
-
 
 
 @client.command()
