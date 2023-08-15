@@ -12,66 +12,6 @@ client = init_client()
 
 @client.command()
 @commands.has_role("Server Op")
-async def lpapply(ctx, *args):  # Capture all arguments as a list
-    shell = ctx.bot.extra_events["shell"]
-
-    # Join all arguments into a single string, enclosed in single quotes
-    arg = " ".join(args)
-    if not arg:
-        await ctx.send("Please provide an argument.")
-        return
-
-    # Execute ./minecraft_command.sh with 'arg' enclosed in single quotes via SSH
-    lpapply_command = f"./minecraft_command.sh '{arg}'"
-    try:
-        shell.run(lpapply_command, hide=True)
-    except Exception as e:
-        print(f"An error occurred while running the command: {e}")
-        await ctx.send("An error occurred while running the command.")
-        return
-
-    # Read the latest.log file directly and process the lines in reverse order
-    with shell.cd("logs"):
-        logs_command = "tac latest.log | head -n 100"
-        logs_output = shell.run(logs_command, hide=True)
-        logs_lines = logs_output.stdout.strip().split("\n")
-
-    # Prepare lists to store success and session expired logs
-    relevant_logs = []
-
-    # Process the logs and capture the first relevant message
-    for i, line in enumerate(logs_lines):
-        if (
-            "Web editor data was applied to " in line
-            or "[LP] The changes received from the web editor are based" in line
-            or "[LP] No changes were applied from the web editor, the returned data didn't contain any edits."
-            in line
-        ):
-            relevant_logs.append(line)
-            if "[LP] The changes received from the web editor are based" in line:
-                # For session expired message, also capture the next 2 lines
-                relevant_logs.extend(logs_lines[i + 1 : i + 3])
-            else:
-                # For success message, capture all lines with the same timestamp
-                timestamp = line.split("[")[1].split("]")[0]
-                timestamp_logs = []
-                for next_line in logs_lines[i + 1 :]:
-                    if f"[{timestamp}" in next_line:
-                        timestamp_logs.append(next_line)
-                relevant_logs.extend(timestamp_logs)
-            break  # Stop processing after the first relevant message
-
-    # Prepare the final output to be sent to Discord
-    if relevant_logs:
-        output = "\n".join(relevant_logs)
-        output = output.replace("```", "`\u200b``")  # Prevent code block escaping
-        await ctx.send(f"```python\n{output}\n```")
-    else:
-        await ctx.send("No relevant logs found.")
-
-
-@client.command()
-@commands.has_role("Server Op")
 async def list(ctx):
     shell = ctx.bot.extra_events["shell"]
     await ctx.send("Fetching player list...")
