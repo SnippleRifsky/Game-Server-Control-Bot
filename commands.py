@@ -1,4 +1,6 @@
 import discord
+import time
+import re
 from fabric import exceptions as fabric_exceptions
 from invoke import exceptions as invoke_exceptions
 from client import init_client
@@ -45,6 +47,73 @@ async def list(ctx):
     # Send the sanitized and combined lines as a single message to Discord
     code_block = "```python\n" + sanitized_lines + "\n```"
     await ctx.send(code_block)
+
+
+@client.command()
+@commands.has_role("Server Op")
+async def lpedit(ctx):
+    shell = ctx.bot.extra_events["shell"]
+
+    # Execute ./minecraft_command.sh 'lp editor' via SSH
+    lpedit_command = "./minecraft_command.sh 'lp editor'"
+    try:
+        shell.run(lpedit_command, hide=True)
+    except Exception as e:
+        print(f"An error occurred while running the command: {e}")
+        pass
+
+    # Introduce a 2-second delay
+    time.sleep(1)
+
+    # Find the last occurrence of new lp editor session in the logs
+    last_lpedit_command = (
+        "grep 'Preparing a new editor session' logs/latest.log* | tail -n 1"
+    )
+    last_lpedit_output = shell.run(last_lpedit_command, hide=True)
+
+    last_lpedit_line = last_lpedit_output.stdout.strip()
+
+    # Get the next line after the last_lpedit_line
+    editor_link = shell.run("tail -n 1 logs/latest.log*", hide=True).stdout.strip()
+
+    # Define a regular expression pattern for timestamp and header
+    pattern = re.compile(r"\[\d{2}:\d{2}:\d{2}\] \[luckperms-command-executor/INFO\]: ")
+
+    # Remove the timestamp and header pattern using regular expressions
+    sanitized_last_lpedit_line = pattern.sub("", last_lpedit_line)
+    sanitized_editor_link = pattern.sub("", editor_link)
+
+    formatted_message = f"`{sanitized_last_lpedit_line}`\n{sanitized_editor_link}"
+
+    await ctx.send(formatted_message)
+    await ctx.send("If the session needs to be trusted, use `!lptrust`")
+
+
+@client.command()
+@commands.has_role("Server Op")
+async def lptrust(ctx):
+    shell = ctx.bot.extra_events["shell"]
+
+    # Find the last occurrence of "If it was you, run" line in the logs
+    lptrust_command = "grep 'If it was you, run' logs/latest.log* | tail -n 1"
+    lptrust_output = shell.run(lptrust_command, hide=True).stdout.strip()
+
+    # Extract the session_key from the line using regular expressions
+    pattern = re.compile(r"run (.* )?to")
+    match = pattern.search(lptrust_output)
+    if match:
+        session_key = match.group(1).strip()
+
+        # Execute ./minecraft_command.sh 'session_key' via SSH
+        trust_command = f"./minecraft_command.sh '{session_key}'"
+        try:
+            shell.run(trust_command, hide=True)
+            await ctx.send(f"Successfully executed the command: {trust_command}")
+        except Exception as e:
+            print(f"An error occurred while running the command: {e}")
+            await ctx.send(f"An error occurred while running the command: {e}")
+    else:
+        await ctx.send("No suitable session key found in the logs.")
 
 
 @client.command()
