@@ -42,6 +42,19 @@ async def on_ready():
     print("------------------------------")
 
 
+@client.event
+async def on_disconnect():
+    print("Disconnected from Discord. Reconnecting...")
+
+    # Main loop for reconnection
+    while True:
+        try:
+            client.run(BOTTOKEN)
+        except discord.errors.ConnectionClosed as e:
+            print(f"Error: {e}")
+            print("Reconnecting...")
+
+
 @client.command()
 @commands.has_role("Server Op")
 async def lpedit(ctx):
@@ -55,7 +68,6 @@ async def lpedit(ctx):
         print(f"An error occurred while running the command: {e}")
         pass
 
-    # Introduce a 2-second delay
     time.sleep(1)
 
     # Find the last occurrence of new lp editor session in the logs
