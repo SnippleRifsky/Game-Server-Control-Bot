@@ -13,6 +13,11 @@ discord.Intents.members = True
 discord.Intents.guilds = True
 client = commands.Bot(command_prefix="!", intents=intents)
 
+# Define global variables for SSH connection
+host = None
+user = None
+password = None
+
 BOTTOKEN = get_api_keys()
 
 
@@ -27,7 +32,8 @@ async def on_ready():
         print(f"Connected to guild: {guild.name} (ID: {guild.id})")
 
         # Initialize the SSH shell
-        shell = init_ssh()
+        global host, user, password
+        shell = init_ssh(host, user, password)
         client.extra_events["shell"] = shell  # Attach to client.extra_events
 
         if get(guild.roles, name="Server Op"):
@@ -40,6 +46,19 @@ async def on_ready():
 
     print("Bot Initialized")
     print("------------------------------")
+
+
+@client.event
+async def on_disconnect():
+    print("Disconnected from Discord. Reconnecting...")
+
+    # Main loop for reconnection
+    while True:
+        try:
+            client.run(BOTTOKEN)
+        except discord.errors.ConnectionClosed as e:
+            print(f"Error: {e}")
+            print("Reconnecting...")
 
 
 @client.command()
@@ -55,7 +74,6 @@ async def lpedit(ctx):
         print(f"An error occurred while running the command: {e}")
         pass
 
-    # Introduce a 2-second delay
     time.sleep(1)
 
     # Find the last occurrence of new lp editor session in the logs
