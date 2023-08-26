@@ -13,6 +13,11 @@ discord.Intents.members = True
 discord.Intents.guilds = True
 client = commands.Bot(command_prefix="!", intents=intents)
 
+# Define global variables for SSH connection
+host = None
+user = None
+password = None
+
 BOTTOKEN = get_api_keys()
 
 
@@ -27,6 +32,7 @@ async def on_ready():
         print(f"Connected to guild: {guild.name} (ID: {guild.id})")
 
         # Initialize the SSH shell
+        global host, user, password
         shell = init_ssh()
         client.extra_events["shell"] = shell  # Attach to client.extra_events
 

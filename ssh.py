@@ -4,8 +4,6 @@ from fabric import Connection, Config
 
 def init_ssh():
 
-    global host, user, password
-
     print("Establishing SSH session, please provide connection details...")
     print("--------------------------------------------------------------")
     if host is None:
