@@ -2,9 +2,7 @@ import getpass
 from fabric import Connection, Config
 
 
-def init_ssh():
-
-    global host, user, password
+def init_ssh(host, user, password):
 
     print("Establishing SSH session, please provide connection details...")
     print("--------------------------------------------------------------")

@@ -33,7 +33,7 @@ async def on_ready():
 
         # Initialize the SSH shell
         global host, user, password
-        shell = init_ssh()
+        shell = init_ssh(host, user, password)
         client.extra_events["shell"] = shell  # Attach to client.extra_events
 
         if get(guild.roles, name="Server Op"):
